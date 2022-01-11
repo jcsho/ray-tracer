@@ -119,5 +119,18 @@ fn assert_tuple_type(
 }
 
 fn main() {
-    futures::executor::block_on(TupleWorld::run("./tests/features/tuples.feature"));
+    use cucumber::writer;
+    use std::fs;
+
+    let file = fs::File::create(dbg!(format!(
+        "{}/target/reports/tuples.xml",
+        env!("CARGO_MANIFEST_DIR")
+    )))
+    .unwrap();
+
+    futures::executor::block_on(
+        TupleWorld::cucumber()
+            .with_writer(writer::JUnit::new(file, 0))
+            .run("tests/features/tuples.feature"),
+    );
 }

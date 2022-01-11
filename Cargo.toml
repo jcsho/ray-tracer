@@ -7,7 +7,7 @@ edition = "2021"
 
 [dev-dependencies]
 async-trait = "0.1"
-cucumber = "0.11"
+cucumber = { version = "0.11", features = ["output-junit"] }
 futures = "0.3"
 
 [[test]]
