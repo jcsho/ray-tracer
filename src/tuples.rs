@@ -13,3 +13,11 @@ impl PartialEq for Tuple {
         discriminant(self) == discriminant(other)
     }
 }
+
+pub fn point(x: f64, y: f64, z: f64) -> Tuple {
+    Tuple::Point { x, y, z, w: 1.0 }
+}
+
+pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
+    Tuple::Vector { x, y, z, w: 0.0 }
+}

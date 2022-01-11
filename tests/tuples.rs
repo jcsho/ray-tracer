@@ -3,7 +3,7 @@ use std::convert::Infallible;
 use async_trait::async_trait;
 use cucumber::{given, then, World, WorldInit};
 
-use ray_tracer::tuples::Tuple;
+use ray_tracer::tuples::{point, vector, Tuple};
 
 #[derive(Debug, WorldInit)]
 struct TupleWorld {
@@ -73,48 +73,62 @@ fn assert_tuple_type(
 
     match compare_operator.as_str() {
         "is" => match expected_tuple_type.as_str() {
-            "point" => assert_eq!(
-                tuple,
-                &Tuple::Point {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                    w: 0.0
-                }
-            ),
-            "vector" => assert_eq!(
-                tuple,
-                &Tuple::Vector {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                    w: 0.0
-                }
-            ),
+            "point" => assert_eq!(tuple, &point(0.0, 0.0, 0.0)),
+            "vector" => assert_eq!(tuple, &vector(0.0, 0.0, 0.0)),
             _ => panic!("Unknown tuple type: {}", expected_tuple_type),
         },
         "is not" => match expected_tuple_type.as_str() {
-            "point" => assert_ne!(
-                tuple,
-                &Tuple::Point {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                    w: 0.0
-                }
-            ),
-            "vector" => assert_ne!(
-                tuple,
-                &Tuple::Vector {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                    w: 0.0
-                }
-            ),
+            "point" => assert_ne!(tuple, &point(0.0, 0.0, 0.0)),
+            "vector" => assert_ne!(tuple, &vector(0.0, 0.0, 0.0)),
             _ => panic!("Unknown tuple type: {}", expected_tuple_type),
         },
         _ => panic!("Unknown operator: {}", compare_operator),
+    }
+}
+
+#[given(regex = r"^(?:p|v) ← (point|vector)\((-?\d+.?\d?), (-?\d+.?\d?), (-?\d+.?\d?)\)$")]
+fn create_tuples_shortcut(world: &mut TupleWorld, tuple_type: String, x: f64, y: f64, z: f64) {
+    match tuple_type.as_str() {
+        "point" => world.input = Some(point(x, y, z)),
+        "vector" => world.input = Some(vector(x, y, z)),
+        _ => panic!("Unknown tuple type: {}", tuple_type),
+    }
+}
+
+#[then(regex = r"^(p|v) = tuple\((-?\d+.?\d?), (-?\d+.?\d?), (-?\d+.?\d?), (-?\d+.?\d?)\)")]
+fn assert_tuples_shortcut(
+    world: &mut TupleWorld,
+    tuple_type: String,
+    expected_x: f64,
+    expected_y: f64,
+    expected_z: f64,
+    expected_w: f64,
+) {
+    let tuple = world
+        .input
+        .as_ref()
+        .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
+
+    match tuple_type.as_str() {
+        "p" => match tuple {
+            Tuple::Point { x, y, z, w } => {
+                assert_eq!(x, &expected_x);
+                assert_eq!(y, &expected_y);
+                assert_eq!(z, &expected_z);
+                assert_eq!(w, &expected_w);
+            }
+            Tuple::Vector { .. } => panic!("Incorrect tuple type. Expected Point but found Vector"),
+        },
+        "v" => match tuple {
+            Tuple::Point { .. } => panic!("Incorrect tuple type. Expected Vector but found Point"),
+            Tuple::Vector { x, y, z, w } => {
+                assert_eq!(x, &expected_x);
+                assert_eq!(y, &expected_y);
+                assert_eq!(z, &expected_z);
+                assert_eq!(w, &expected_w);
+            }
+        },
+        _ => panic!("Unknown tuple type: {}", tuple_type),
     }
 }
 
@@ -122,7 +136,7 @@ fn main() {
     use cucumber::writer;
     use std::fs;
 
-    fs::create_dir(dbg!(format!("{}/reports", env!("CARGO_MANIFEST_DIR")))).unwrap();
+    fs::create_dir(dbg!(format!("{}/reports", env!("CARGO_MANIFEST_DIR")))).unwrap_or(());
 
     let file = fs::File::create(dbg!(format!(
         "{}/reports/tuples.xml",
