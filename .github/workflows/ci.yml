@@ -55,7 +55,7 @@ jobs:
         if: always()
         with:
           check_name: "Test Results"
-          files: target/reports/*.xml
+          files: reports/*.xml
 
   lint:
     name: Lint
