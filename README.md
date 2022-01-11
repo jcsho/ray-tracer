@@ -1,5 +1,7 @@
 # Ray Tracer
 
+[![Build and Test](https://github.com/jcsho/ray-tracer/actions/workflows/ci.yml/badge.svg)](https://github.com/jcsho/ray-tracer/actions/workflows/ci.yml)
+
 Rust implementation of [the Ray Tracer Challenge](http://raytracerchallenge.com/) by Jamis Buck.
 
 The book only provides test scenarios (in [cucumber format](https://cucumber.io)) and pseudocode.
