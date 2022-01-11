@@ -122,8 +122,10 @@ fn main() {
     use cucumber::writer;
     use std::fs;
 
+    fs::create_dir(dbg!(format!("{}/reports", env!("CARGO_MANIFEST_DIR")))).unwrap();
+
     let file = fs::File::create(dbg!(format!(
-        "{}/target/reports/tuples.xml",
+        "{}/reports/tuples.xml",
         env!("CARGO_MANIFEST_DIR")
     )))
     .unwrap();
