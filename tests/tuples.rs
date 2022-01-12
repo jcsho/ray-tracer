@@ -3,7 +3,7 @@ use std::convert::Infallible;
 use async_trait::async_trait;
 use cucumber::{given, then, World, WorldInit};
 
-use ray_tracer::tuples::{point, vector, Tuple};
+use ray_tracer::tuples::{point, vector, Tuple, TupleData};
 
 #[derive(Debug, WorldInit)]
 struct TupleWorld {
@@ -25,9 +25,9 @@ impl World for TupleWorld {
 fn parse_tuple(world: &mut TupleWorld, x: f64, y: f64, z: f64, w: f64) {
     // workarounds cucumber parses 1.0 and 0.0 as 0 and 1
     if (w as usize) == 1 {
-        world.input = Some(Tuple::Point { x, y, z, w });
+        world.input = Some(point(x, y, z));
     } else if (w as usize) == 0 {
-        world.input = Some(Tuple::Vector { x, y, z, w });
+        world.input = Some(vector(x, y, z));
     } else {
         panic!("Unknown `w` value: {}", w);
     }
@@ -41,23 +41,16 @@ fn assert_tuple_values(world: &mut TupleWorld, property: String, expected_value:
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
     let actual_value = match tuple {
-        Tuple::Point { x, y, z, w } => match property.as_str() {
-            "x" => x,
-            "y" => y,
-            "z" => z,
-            "w" => w,
-            _ => panic!("Unknown property value \"{}\"", property),
-        },
-        Tuple::Vector { x, y, z, w } => match property.as_str() {
-            "x" => x,
-            "y" => y,
-            "z" => z,
-            "w" => w,
+        Tuple::Point(td) | Tuple::Vector(td) => match property.as_str() {
+            "x" => &td.x,
+            "y" => &td.y,
+            "z" => &td.z,
+            "w" => &td.w,
             _ => panic!("Unknown property value \"{}\"", property),
         },
     };
 
-    assert_eq!(actual_value, &expected_value);
+    assert_eq!(*actual_value, expected_value);
 }
 
 #[then(regex = r"^a (is|is not) a (point|vector)$")]
@@ -73,13 +66,13 @@ fn assert_tuple_type(
 
     match compare_operator.as_str() {
         "is" => match expected_tuple_type.as_str() {
-            "point" => assert_eq!(tuple, &point(0.0, 0.0, 0.0)),
-            "vector" => assert_eq!(tuple, &vector(0.0, 0.0, 0.0)),
+            "point" => assert_eq!(*tuple, point(0.0, 0.0, 0.0)),
+            "vector" => assert_eq!(*tuple, vector(0.0, 0.0, 0.0)),
             _ => panic!("Unknown tuple type: {}", expected_tuple_type),
         },
         "is not" => match expected_tuple_type.as_str() {
-            "point" => assert_ne!(tuple, &point(0.0, 0.0, 0.0)),
-            "vector" => assert_ne!(tuple, &vector(0.0, 0.0, 0.0)),
+            "point" => assert_ne!(*tuple, point(0.0, 0.0, 0.0)),
+            "vector" => assert_ne!(*tuple, vector(0.0, 0.0, 0.0)),
             _ => panic!("Unknown tuple type: {}", expected_tuple_type),
         },
         _ => panic!("Unknown operator: {}", compare_operator),
@@ -109,27 +102,22 @@ fn assert_tuples_shortcut(
         .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
-    match tuple_type.as_str() {
+    let TupleData { x, y, z, w } = match tuple_type.as_str() {
         "p" => match tuple {
-            Tuple::Point { x, y, z, w } => {
-                assert_eq!(x, &expected_x);
-                assert_eq!(y, &expected_y);
-                assert_eq!(z, &expected_z);
-                assert_eq!(w, &expected_w);
-            }
-            Tuple::Vector { .. } => panic!("Incorrect tuple type. Expected Point but found Vector"),
+            Tuple::Point(td) => td,
+            _ => panic!("Incorrect tuple type. Expected Point but found Vector"),
         },
         "v" => match tuple {
-            Tuple::Point { .. } => panic!("Incorrect tuple type. Expected Vector but found Point"),
-            Tuple::Vector { x, y, z, w } => {
-                assert_eq!(x, &expected_x);
-                assert_eq!(y, &expected_y);
-                assert_eq!(z, &expected_z);
-                assert_eq!(w, &expected_w);
-            }
+            Tuple::Vector(td) => td,
+            _ => panic!("Incorrect tuple type. Expected Vector but found Point"),
         },
         _ => panic!("Unknown tuple type: {}", tuple_type),
-    }
+    };
+
+    assert_eq!(x, &expected_x);
+    assert_eq!(y, &expected_y);
+    assert_eq!(z, &expected_z);
+    assert_eq!(w, &expected_w);
 }
 
 fn main() {
