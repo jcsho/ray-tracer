@@ -18,6 +18,14 @@ pub enum Tuple {
     Vector(TupleData),
 }
 
+impl Tuple {
+    fn unwrap(&self) -> &TupleData {
+        match self {
+            Tuple::Point(td) | Tuple::Vector(td) => td,
+        }
+    }
+}
+
 impl PartialEq for Tuple {
     fn eq(&self, other: &Self) -> bool {
         discriminant(self) == discriminant(other)
@@ -40,6 +48,44 @@ pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
         z: Float::from(z),
         w: Float::from(0.0),
     })
+}
+
+impl TryFrom<TupleData> for Tuple {
+    type Error = ();
+
+    fn try_from(value: TupleData) -> Result<Self, Self::Error> {
+        if value.w == 1.0 {
+            Ok(Tuple::Point(value))
+        } else if value.w == 0.0 {
+            Ok(Tuple::Vector(value))
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl<'a, 'b> Add<&'b Tuple> for &'a Tuple {
+    type Output = Result<Tuple, ()>;
+
+    fn add(self, rhs: &'b Tuple) -> Self::Output {
+        match Tuple::try_from(self.unwrap() + rhs.unwrap()) {
+            Ok(res) => Ok(res),
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'a, 'b> Add<&'b TupleData> for &'a TupleData {
+    type Output = TupleData;
+
+    fn add(self, rhs: &'b TupleData) -> TupleData {
+        TupleData {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+            w: self.w + rhs.w,
+        }
+    }
 }
 
 /// New-type wrapper for f64
