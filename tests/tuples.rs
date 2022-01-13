@@ -188,7 +188,7 @@ fn assert_tuples_operation(
 }
 
 fn main() {
-    use cucumber::writer;
+    use cucumber::{writer, WriterExt as _};
     use std::fs;
 
     fs::create_dir(dbg!(format!("{}/reports", env!("CARGO_MANIFEST_DIR")))).unwrap_or(());
@@ -201,7 +201,12 @@ fn main() {
 
     futures::executor::block_on(
         TupleWorld::cucumber()
-            .with_writer(writer::JUnit::new(file, 0))
+            .with_writer(
+                writer::Basic::stdout()
+                    .summarized()
+                    .tee::<TupleWorld, _>(writer::JUnit::for_tee(file, 0))
+                    .normalized(),
+            )
             .run("tests/features/tuples.feature"),
     );
 }
