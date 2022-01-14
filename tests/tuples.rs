@@ -108,11 +108,33 @@ fn assert_tuple_type(
 }
 
 #[given(regex = r"^(?:p|v) ← (point|vector)\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$")]
-fn create_tuples_shortcut(world: &mut TupleWorld, tuple_type: String, x: f64, y: f64, z: f64) {
+fn create_one_tuple_shortcut(world: &mut TupleWorld, tuple_type: String, x: f64, y: f64, z: f64) {
     match tuple_type.as_str() {
         "point" => world.input1 = Some(point(x, y, z)),
         "vector" => world.input1 = Some(vector(x, y, z)),
         _ => panic!("Unknown tuple type: {}", tuple_type),
+    }
+}
+
+#[given(regex = r"^t(\d) ← (point|vector)\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$")]
+fn create_multiple_tuples_shortcut(
+    world: &mut TupleWorld,
+    num: usize,
+    tuple_type: String,
+    x: f64,
+    y: f64,
+    z: f64,
+) {
+    let tuple = match tuple_type.as_str() {
+        "point" => Some(point(x, y, z)),
+        "vector" => Some(vector(x, y, z)),
+        _ => panic!("Unknown tuple type: {}", tuple_type),
+    };
+
+    match num {
+        1 => world.input1 = tuple,
+        2 => world.input2 = tuple,
+        _ => panic!("Unsupported number value"),
     }
 }
 
@@ -149,7 +171,7 @@ fn assert_tuples_shortcut(
 }
 
 #[then(
-    regex = r"^\w\d (\+) \w\d = tuple\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$"
+    regex = r"^\w\d ([+-]) \w\d = tuple\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$"
 )]
 fn assert_tuples_operation(
     world: &mut TupleWorld,
@@ -171,6 +193,7 @@ fn assert_tuples_operation(
 
     let result = match operator.as_str() {
         "+" => tuple1 + tuple2,
+        "-" => tuple1 - tuple2,
         _ => panic!("Unexpected operator: {}", operator),
     };
 

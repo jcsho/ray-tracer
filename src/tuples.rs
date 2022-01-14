@@ -1,5 +1,5 @@
 use std::mem::discriminant;
-use std::ops::Add;
+use std::ops::{Add, Sub};
 
 /// Base type to represent the coordinate system
 /// (uses the left-handed coordinate system)
@@ -75,6 +75,17 @@ impl<'a, 'b> Add<&'b Tuple> for &'a Tuple {
     }
 }
 
+impl<'a, 'b> Sub<&'b Tuple> for &'a Tuple {
+    type Output = Result<Tuple, ()>;
+
+    fn sub(self, rhs: &'b Tuple) -> Self::Output {
+        match Tuple::try_from(self.unwrap() - rhs.unwrap()) {
+            Ok(res) => Ok(res),
+            _ => Err(()),
+        }
+    }
+}
+
 impl<'a, 'b> Add<&'b TupleData> for &'a TupleData {
     type Output = TupleData;
 
@@ -84,6 +95,19 @@ impl<'a, 'b> Add<&'b TupleData> for &'a TupleData {
             y: self.y + rhs.y,
             z: self.z + rhs.z,
             w: self.w + rhs.w,
+        }
+    }
+}
+
+impl<'a, 'b> Sub<&'b TupleData> for &'a TupleData {
+    type Output = TupleData;
+
+    fn sub(self, rhs: &'b TupleData) -> TupleData {
+        TupleData {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+            w: self.w - rhs.w,
         }
     }
 }
@@ -120,5 +144,13 @@ impl Add<Self> for Float {
 
     fn add(self, rhs: Self) -> Self::Output {
         Float::from(self.0 + rhs.0)
+    }
+}
+
+impl Sub<Self> for Float {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Float::from(self.0 - rhs.0)
     }
 }

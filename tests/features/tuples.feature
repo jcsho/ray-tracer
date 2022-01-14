@@ -30,3 +30,23 @@ Scenario: Adding two tuples
   Given a1 ← tuple(3, -2, 5, 1)
   And a2 ← tuple(-2, 3, 1, 0)
   Then a1 + a2 = tuple(1, 1, 6, 1)
+
+Scenario: Subtracting two points
+  Given t1 ← point(3, 2, 1)
+  And t2 ← point(5, 6, 7)
+  Then t1 - t2 = tuple(-2, -4, -6, 0)
+
+Scenario: Subtracting a vector from a point
+  Given t1 ← point(3, 2, 1)
+  And t2 ← vector(5, 6, 7)
+  Then t1 - t2 = tuple(-2, -4, -6, 1)
+
+Scenario: Subtracting two vectors
+  Given t1 ← vector(3, 2, 1)
+  And t2 ← vector(5, 6, 7)
+  Then t1 - t2 = tuple(-2, -4, -6, 0)
+
+Scenario: Subtracting a vector from the zero vector
+  Given t1 ← vector(0, 0, 0)
+  And t2 ← vector(1, -2, 3)
+  Then t1 - t2 = tuple(-1, 2, -3, 0)
