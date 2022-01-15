@@ -3,12 +3,47 @@ use std::convert::Infallible;
 use async_trait::async_trait;
 use cucumber::{given, then, World, WorldInit};
 
-use ray_tracer::tuples::{point, vector, Tuple, TupleData};
+use ray_tracer::tuples::{point, vector, Float, Point, Vector};
+
+#[derive(Debug)]
+enum TupleType {
+    PointTuple(Point),
+    VectorTuple(Vector),
+}
+
+type Tuple<'a> = (&'a Float, &'a Float, &'a Float, Float);
+
+fn unwrap_tuple(tuple: &TupleType) -> Tuple {
+    match tuple {
+        TupleType::PointTuple(Point { x, y, z }) => (x, y, z, Float::from(1.0)),
+        TupleType::VectorTuple(Vector { x, y, z }) => (x, y, z, Float::from(0.0)),
+    }
+}
+
+fn tuple_operation_matrix(
+    tuple1: &TupleType,
+    tuple2: &TupleType,
+    point_to_point_operation: fn(&Point, &Point) -> TupleType,
+    point_to_vector_operation: fn(&Point, &Vector) -> TupleType,
+    vector_to_point_operation: fn(&Vector, &Point) -> TupleType,
+    vector_to_vector_operation: fn(&Vector, &Vector) -> TupleType,
+) -> TupleType {
+    match tuple1 {
+        TupleType::PointTuple(p1) => match tuple2 {
+            TupleType::PointTuple(p2) => point_to_point_operation(p1, p2),
+            TupleType::VectorTuple(v) => point_to_vector_operation(p1, v),
+        },
+        TupleType::VectorTuple(v1) => match tuple2 {
+            TupleType::PointTuple(p) => vector_to_point_operation(v1, p),
+            TupleType::VectorTuple(v2) => vector_to_vector_operation(v1, v2),
+        },
+    }
+}
 
 #[derive(Debug, WorldInit)]
 struct TupleWorld {
-    input1: Option<Tuple>,
-    input2: Option<Tuple>,
+    input1: Option<TupleType>,
+    input2: Option<TupleType>,
 }
 
 #[async_trait(?Send)]
@@ -23,62 +58,39 @@ impl World for TupleWorld {
     }
 }
 
-#[given(regex = r"^a ← tuple\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$")]
-fn parse_single_input(world: &mut TupleWorld, x: f64, y: f64, z: f64, w: f64) {
-    // workarounds cucumber parses 1.0 and 0.0 as 0 and 1
-    if (w as usize) == 1 {
-        world.input1 = Some(point(x, y, z));
-    } else if (w as usize) == 0 {
-        world.input1 = Some(vector(x, y, z));
+#[given(regex = r"^a\d? ← tuple\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$")]
+fn parse_tuple_inputs(world: &mut TupleWorld, x: f64, y: f64, z: f64, w: f64) {
+    let tuple: TupleType;
+    if w == 0.0 {
+        tuple = TupleType::VectorTuple(vector(x, y, z));
+    } else if w == 1.0 {
+        tuple = TupleType::PointTuple(point(x, y, z));
     } else {
-        panic!("Unknown `w` value: {}", w);
-    }
-}
-
-#[given(regex = r"^a(\d) ← tuple\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$")]
-fn parse_multiple_inputs(
-    world: &mut TupleWorld,
-    num: usize,
-    x: isize,
-    y: isize,
-    z: isize,
-    w: isize,
-) {
-    let tuple: Tuple;
-    // workarounds cucumber parses 1.0 and 0.0 as 0 and 1
-    if (w as usize) == 1 {
-        tuple = point(x as f64, y as f64, z as f64);
-    } else if (w as usize) == 0 {
-        tuple = vector(x as f64, y as f64, z as f64);
-    } else {
-        panic!("Unknown `w` value: {}", w);
+        panic!("Unexpected tuple type: {}", w);
     }
 
-    match num {
-        1 => world.input1 = Some(tuple),
-        2 => world.input2 = Some(tuple),
-        _ => panic!("Unsupported input value"),
+    match world.input1 {
+        None => world.input1 = Some(tuple),
+        _ => world.input2 = Some(tuple),
     }
 }
 
 #[then(regex = r"^a.(x|y|z|w) = (-?\d+.\d+)$")]
-fn assert_tuple_values(world: &mut TupleWorld, property: String, expected_value: f64) {
+fn assert_single_tuple_properties(world: &mut TupleWorld, property: String, expected_value: f64) {
     let tuple = world
         .input1
         .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
-    let actual_value = match tuple {
-        Tuple::Point(td) | Tuple::Vector(td) => match property.as_str() {
-            "x" => &td.x,
-            "y" => &td.y,
-            "z" => &td.z,
-            "w" => &td.w,
-            _ => panic!("Unknown property value \"{}\"", property),
-        },
-    };
+    let (x, y, z, w) = unwrap_tuple(tuple);
 
-    assert_eq!(*actual_value, expected_value);
+    match property.as_str() {
+        "x" => assert_eq!(x, &expected_value),
+        "y" => assert_eq!(y, &expected_value),
+        "z" => assert_eq!(z, &expected_value),
+        "w" => assert_eq!(w, expected_value),
+        _ => panic!("Unknown property value \"{}\"", property),
+    }
 }
 
 #[then(regex = r"^a (is|is not) a (point|vector)$")]
@@ -92,56 +104,49 @@ fn assert_tuple_type(
         .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
+    let tuple_type = match tuple {
+        TupleType::PointTuple(_) => 1.0,
+        TupleType::VectorTuple(_) => 0.0,
+    };
+
     match compare_operator.as_str() {
         "is" => match expected_tuple_type.as_str() {
-            "point" => assert_eq!(*tuple, point(0.0, 0.0, 0.0)),
-            "vector" => assert_eq!(*tuple, vector(0.0, 0.0, 0.0)),
+            "point" => assert_eq!(tuple_type, 1.0),
+            "vector" => assert_eq!(tuple_type, 0.0),
             _ => panic!("Unknown tuple type: {}", expected_tuple_type),
         },
         "is not" => match expected_tuple_type.as_str() {
-            "point" => assert_ne!(*tuple, point(0.0, 0.0, 0.0)),
-            "vector" => assert_ne!(*tuple, vector(0.0, 0.0, 0.0)),
+            "point" => assert_ne!(tuple_type, 1.0),
+            "vector" => assert_ne!(tuple_type, 0.0),
             _ => panic!("Unknown tuple type: {}", expected_tuple_type),
         },
         _ => panic!("Unknown operator: {}", compare_operator),
     }
 }
 
-#[given(regex = r"^(?:p|v) ← (point|vector)\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$")]
-fn create_one_tuple_shortcut(world: &mut TupleWorld, tuple_type: String, x: f64, y: f64, z: f64) {
-    match tuple_type.as_str() {
-        "point" => world.input1 = Some(point(x, y, z)),
-        "vector" => world.input1 = Some(vector(x, y, z)),
-        _ => panic!("Unknown tuple type: {}", tuple_type),
-    }
-}
-
-#[given(regex = r"^t(\d) ← (point|vector)\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$")]
+#[given(regex = r"^\w\d? ← (point|vector)\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$")]
 fn create_multiple_tuples_shortcut(
     world: &mut TupleWorld,
-    num: usize,
     tuple_type: String,
     x: f64,
     y: f64,
     z: f64,
 ) {
     let tuple = match tuple_type.as_str() {
-        "point" => Some(point(x, y, z)),
-        "vector" => Some(vector(x, y, z)),
-        _ => panic!("Unknown tuple type: {}", tuple_type),
+        "point" => TupleType::PointTuple(point(x, y, z)),
+        "vector" => TupleType::VectorTuple(vector(x, y, z)),
+        str => panic!("Unexpected tuple type: {}", str),
     };
 
-    match num {
-        1 => world.input1 = tuple,
-        2 => world.input2 = tuple,
-        _ => panic!("Unsupported number value"),
+    match world.input1 {
+        None => world.input1 = Some(tuple),
+        _ => world.input2 = Some(tuple),
     }
 }
 
-#[then(regex = r"^(p|v) = tuple\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)")]
+#[then(regex = r"^\w = tuple\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)")]
 fn assert_tuples_shortcut(
     world: &mut TupleWorld,
-    tuple_type: String,
     expected_x: f64,
     expected_y: f64,
     expected_z: f64,
@@ -152,22 +157,12 @@ fn assert_tuples_shortcut(
         .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
-    let TupleData { x, y, z, w } = match tuple_type.as_str() {
-        "p" => match tuple {
-            Tuple::Point(td) => td,
-            _ => panic!("Incorrect tuple type. Expected Point but found Vector"),
-        },
-        "v" => match tuple {
-            Tuple::Vector(td) => td,
-            _ => panic!("Incorrect tuple type. Expected Vector but found Point"),
-        },
-        _ => panic!("Unknown tuple type: {}", tuple_type),
-    };
+    let (x, y, z, w) = unwrap_tuple(tuple);
 
     assert_eq!(x, &expected_x);
     assert_eq!(y, &expected_y);
     assert_eq!(z, &expected_z);
-    assert_eq!(w, &expected_w);
+    assert_eq!(w, expected_w);
 }
 
 #[then(
@@ -192,22 +187,31 @@ fn assert_tuples_operation(
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
     let result = match operator.as_str() {
-        "+" => tuple1 + tuple2,
-        "-" => tuple1 - tuple2,
+        "+" => tuple_operation_matrix(
+            tuple1,
+            tuple2,
+            |_, _| panic!("Unexpected add operation. Cannot add point to point"),
+            |p, v| TupleType::PointTuple(p + v),
+            |v, p| TupleType::PointTuple(v + p),
+            |v1, v2| TupleType::VectorTuple(v1 + v2),
+        ),
+        "-" => tuple_operation_matrix(
+            tuple1,
+            tuple2,
+            |p1, p2| TupleType::VectorTuple(p1 - p2),
+            |p, v| TupleType::PointTuple(p - v),
+            |_, _| panic!("Unexpected sub operation. Cannot sub point from vector"),
+            |v1, v2| TupleType::VectorTuple(v1 - v2),
+        ),
         _ => panic!("Unexpected operator: {}", operator),
     };
 
-    match result {
-        Ok(t) => match t {
-            Tuple::Point(td) | Tuple::Vector(td) => {
-                assert_eq!(td.x, expected_x);
-                assert_eq!(td.y, expected_y);
-                assert_eq!(td.z, expected_z);
-                assert_eq!(td.w, expected_w);
-            }
-        },
-        _ => panic!("Unexpected operation"),
-    }
+    let (x, y, z, w) = unwrap_tuple(&result);
+
+    assert_eq!(x, &expected_x);
+    assert_eq!(y, &expected_y);
+    assert_eq!(z, &expected_z);
+    assert_eq!(w, expected_w);
 }
 
 #[then(regex = r"^\-a = tuple\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$")]
@@ -223,17 +227,17 @@ fn assert_tuple_negation(
         .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
-    match -tuple {
-        Ok(tuple) => match tuple {
-            Tuple::Point(td) | Tuple::Vector(td) => {
-                assert_eq!(td.x, expected_x);
-                assert_eq!(td.y, expected_y);
-                assert_eq!(td.z, expected_z);
-                assert_eq!(td.w, expected_w);
-            }
-        },
-        _ => panic!("Unexpected operation"),
-    }
+    let result = match tuple {
+        TupleType::PointTuple(p) => TupleType::PointTuple(-(*p)),
+        TupleType::VectorTuple(v) => TupleType::VectorTuple(-(*v)),
+    };
+
+    let (x, y, z, w) = unwrap_tuple(&result);
+
+    assert_eq!(x, &expected_x);
+    assert_eq!(y, &expected_y);
+    assert_eq!(z, &expected_z);
+    assert_eq!(w, expected_w);
 }
 
 fn main() {
