@@ -62,3 +62,7 @@ Scenario: Multiplying a tuple by a scalar
 Scenario: Multiplying a tuple by a fraction
   Given a ← tuple(1, -2, 3, 0)
   Then a * 0.5 = tuple(0.5, -1, 1.5, 0)
+
+Scenario: Dividing a tuple by a scalar
+  Given a ← tuple(1, -2, 3, 0)
+  Then a / 2 = tuple(0.5, -1, 1.5, 0)

@@ -241,7 +241,7 @@ fn assert_tuple_negation(
 }
 
 #[then(
-    regex = r"^\w ([*]) (-?\d+.?\d*) = tuple\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$"
+    regex = r"^\w ([*/]) (-?\d+.?\d*) = tuple\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$"
 )]
 fn assert_tuple_to_scalar_operations(
     world: &mut TupleWorld,
@@ -261,6 +261,10 @@ fn assert_tuple_to_scalar_operations(
         "*" => match tuple {
             TupleType::PointTuple(p) => TupleType::PointTuple(p * Float::from(scalar_value)),
             TupleType::VectorTuple(v) => TupleType::VectorTuple(v * Float::from(scalar_value)),
+        },
+        "/" => match tuple {
+            TupleType::PointTuple(p) => TupleType::PointTuple(p / Float::from(scalar_value)),
+            TupleType::VectorTuple(v) => TupleType::VectorTuple(v / Float::from(scalar_value)),
         },
         _ => panic!("Unexpected scalar operator: {}", operator),
     };

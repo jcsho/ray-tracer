@@ -72,3 +72,15 @@ impl<'a> std::ops::Mul<Float> for &'a Point {
         }
     }
 }
+
+impl<'a> std::ops::Div<Float> for &'a Point {
+    type Output = Point;
+
+    fn div(self, other: Float) -> Self::Output {
+        Point {
+            x: self.x / other,
+            y: self.y / other,
+            z: self.z / other,
+        }
+    }
+}

@@ -56,3 +56,11 @@ impl std::ops::Mul<Self> for Float {
         Float(self.0 * rhs.0)
     }
 }
+
+impl std::ops::Div<Self> for Float {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        Float(self.0 / rhs.0)
+    }
+}
