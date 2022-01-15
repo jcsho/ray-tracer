@@ -168,7 +168,7 @@ fn assert_tuples_shortcut(
 #[then(
     regex = r"^\w\d ([+-]) \w\d = tuple\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$"
 )]
-fn assert_tuples_operation(
+fn assert_tuple_to_tuple_operations(
     world: &mut TupleWorld,
     operator: String,
     expected_x: f64,
@@ -230,6 +230,39 @@ fn assert_tuple_negation(
     let result = match tuple {
         TupleType::PointTuple(p) => TupleType::PointTuple(-(*p)),
         TupleType::VectorTuple(v) => TupleType::VectorTuple(-(*v)),
+    };
+
+    let (x, y, z, w) = unwrap_tuple(&result);
+
+    assert_eq!(x, &expected_x);
+    assert_eq!(y, &expected_y);
+    assert_eq!(z, &expected_z);
+    assert_eq!(w, expected_w);
+}
+
+#[then(
+    regex = r"^\w ([*]) (-?\d+.?\d*) = tuple\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$"
+)]
+fn assert_tuple_to_scalar_operations(
+    world: &mut TupleWorld,
+    operator: String,
+    scalar_value: f64,
+    expected_x: f64,
+    expected_y: f64,
+    expected_z: f64,
+    expected_w: f64,
+) {
+    let tuple = world
+        .input1
+        .as_ref()
+        .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
+
+    let result = match operator.as_str() {
+        "*" => match tuple {
+            TupleType::PointTuple(p) => TupleType::PointTuple(p * Float::from(scalar_value)),
+            TupleType::VectorTuple(v) => TupleType::VectorTuple(v * Float::from(scalar_value)),
+        },
+        _ => panic!("Unexpected scalar operator: {}", operator),
     };
 
     let (x, y, z, w) = unwrap_tuple(&result);

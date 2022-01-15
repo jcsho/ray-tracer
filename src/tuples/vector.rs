@@ -60,3 +60,15 @@ impl std::ops::Neg for Vector {
         }
     }
 }
+
+impl<'a> std::ops::Mul<Float> for &'a Vector {
+    type Output = Vector;
+
+    fn mul(self, other: Float) -> Self::Output {
+        Vector {
+            x: self.x * other,
+            y: self.y * other,
+            z: self.z * other,
+        }
+    }
+}

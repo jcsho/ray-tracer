@@ -1,5 +1,3 @@
-use std::ops::{Add, Neg, Sub};
-
 /// New-type wrapper for f64
 /// implements comparisons against f64
 #[derive(Copy, Clone, Debug)]
@@ -27,7 +25,7 @@ impl PartialEq<f64> for Float {
     }
 }
 
-impl Add<Self> for Float {
+impl std::ops::Add<Self> for Float {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -35,7 +33,7 @@ impl Add<Self> for Float {
     }
 }
 
-impl Sub<Self> for Float {
+impl std::ops::Sub<Self> for Float {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -43,10 +41,18 @@ impl Sub<Self> for Float {
     }
 }
 
-impl Neg for Float {
+impl std::ops::Neg for Float {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
         Float(-self.0)
+    }
+}
+
+impl std::ops::Mul<Self> for Float {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Float(self.0 * rhs.0)
     }
 }
