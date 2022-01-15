@@ -50,3 +50,7 @@ Scenario: Subtracting a vector from the zero vector
   Given t1 ← vector(0, 0, 0)
   And t2 ← vector(1, -2, 3)
   Then t1 - t2 = tuple(-1, 2, -3, 0)
+
+Scenario: Negating a tuple
+  Given a ← tuple(1, -2, 3, 0)
+  Then -a = tuple(-1, 2, -3, 0)

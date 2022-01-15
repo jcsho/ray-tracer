@@ -210,6 +210,32 @@ fn assert_tuples_operation(
     }
 }
 
+#[then(regex = r"^\-a = tuple\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$")]
+fn assert_tuple_negation(
+    world: &mut TupleWorld,
+    expected_x: f64,
+    expected_y: f64,
+    expected_z: f64,
+    expected_w: f64,
+) {
+    let tuple = world
+        .input1
+        .as_ref()
+        .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
+
+    match -tuple {
+        Ok(tuple) => match tuple {
+            Tuple::Point(td) | Tuple::Vector(td) => {
+                assert_eq!(td.x, expected_x);
+                assert_eq!(td.y, expected_y);
+                assert_eq!(td.z, expected_z);
+                assert_eq!(td.w, expected_w);
+            }
+        },
+        _ => panic!("Unexpected operation"),
+    }
+}
+
 fn main() {
     use cucumber::{writer, WriterExt as _};
     use std::fs;
