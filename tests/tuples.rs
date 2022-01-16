@@ -3,7 +3,7 @@ use std::convert::Infallible;
 use async_trait::async_trait;
 use cucumber::{given, then, World, WorldInit};
 
-use ray_tracer::tuples::{point, vector, Float, Point, Vector};
+use ray_tracer::tuples::{magnitude, point, vector, Float, Point, Vector};
 
 #[derive(Debug)]
 enum TupleType {
@@ -275,6 +275,38 @@ fn assert_tuple_to_scalar_operations(
     assert_eq!(y, &expected_y);
     assert_eq!(z, &expected_z);
     assert_eq!(w, expected_w);
+}
+
+#[then(regex = r"^magnitude\(v\) = (\d+)$")]
+fn assert_magnitude_unit_vector(world: &mut TupleWorld, expected_value: f64) {
+    let tuple = world
+        .input1
+        .as_ref()
+        .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
+
+    let result = match tuple {
+        TupleType::VectorTuple(v) => magnitude(v),
+        _ => panic!("Only vector tuples allowed"),
+    };
+
+    assert_eq!(result, expected_value);
+}
+
+#[then(regex = r"^magnitude\(v\) = √(\d+)$")]
+fn assert_magnitude_values(world: &mut TupleWorld, expected_squared_value: f64) {
+    let tuple = world
+        .input1
+        .as_ref()
+        .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
+
+    let result = match tuple {
+        TupleType::VectorTuple(v) => magnitude(v),
+        _ => panic!("Only vector tuples allowed"),
+    };
+
+    let expected_value = expected_squared_value.sqrt();
+
+    assert_eq!(result, expected_value);
 }
 
 fn main() {

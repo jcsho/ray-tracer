@@ -66,3 +66,23 @@ Scenario: Multiplying a tuple by a fraction
 Scenario: Dividing a tuple by a scalar
   Given a ← tuple(1, -2, 3, 0)
   Then a / 2 = tuple(0.5, -1, 1.5, 0)
+
+Scenario: Computing the magnitude of vector(1, 0, 0)
+  Given v ← vector(1, 0, 0)
+  Then magnitude(v) = 1
+
+Scenario: Computing the magnitude of vector(0, 1, 0)
+  Given v ← vector(0, 1, 0)
+  Then magnitude(v) = 1
+
+Scenario: Computing the magnitude of vector(0, 0, 1)
+  Given v ← vector(0, 0, 1)
+  Then magnitude(v) = 1
+
+Scenario: Computing the magnitude of vector(1, 2, 3)
+  Given v ← vector(1, 2, 3)
+  Then magnitude(v) = √14
+
+Scenario: Computing the magnitude of vector(-1, -2, -3)
+  Given v ← vector(-1, -2, -3)
+  Then magnitude(v) = √14

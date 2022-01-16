@@ -64,3 +64,13 @@ impl std::ops::Div<Self> for Float {
         Float(self.0 / rhs.0)
     }
 }
+
+impl Float {
+    pub fn pow(&self, exponent: i32) -> Self {
+        Float(self.0.powi(exponent))
+    }
+
+    pub fn sqrt(&self) -> Self {
+        Float(self.0.sqrt())
+    }
+}
