@@ -3,7 +3,7 @@ use std::convert::Infallible;
 use async_trait::async_trait;
 use cucumber::{given, then, when, World, WorldInit};
 
-use ray_tracer::tuples::{magnitude, normalize, point, vector, Float, Point, Vector};
+use ray_tracer::tuples::{dot_product, magnitude, normalize, point, vector, Float, Point, Vector};
 
 #[derive(Clone, Copy, Debug)]
 enum TupleType {
@@ -270,22 +270,40 @@ fn assert_tuple_to_scalar_operations(
     assert_eq!(w, expected_w);
 }
 
-#[then(regex = r"^magnitude\(\w+\) = (\d+)$")]
-fn assert_magnitude_unit_vector(world: &mut TupleWorld, expected_value: f64) {
-    let tuple = world
-        .input1
-        .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
+#[then(regex = r"^(magnitude|dot)\([\w, ]+\) = (\d+)$")]
+fn assert_vector_operations_scalar_value(
+    world: &mut TupleWorld,
+    operation: String,
+    expected_value: f64,
+) {
+    let vector1 = match world.input1 {
+        Some(input) => match input {
+            TupleType::VectorTuple(v) => v,
+            _ => panic!("Only Vector tuples allowed"),
+        },
+        _ => panic!("Failed to construct first tuple from input"),
+    };
 
-    let result = match tuple {
-        TupleType::VectorTuple(v) => magnitude(v),
-        _ => panic!("Only vector tuples allowed"),
+    let result = match operation.as_str() {
+        "magnitude" => magnitude(vector1),
+        "dot" => {
+            if let Some(tuple2) = world.input2 {
+                match tuple2 {
+                    TupleType::VectorTuple(vector2) => dot_product(vector1, vector2),
+                    _ => panic!("Only vector tuples allowed"),
+                }
+            } else {
+                panic!("Failed to construct second tuple from input")
+            }
+        }
+        _ => panic!("Unknown operation: {}", operation),
     };
 
     assert_eq!(result, expected_value);
 }
 
 #[then(regex = r"^magnitude\(v\) = √(\d+)$")]
-fn assert_magnitude_values(world: &mut TupleWorld, expected_squared_value: f64) {
+fn assert_magnitude_squared_values(world: &mut TupleWorld, expected_squared_value: f64) {
     let tuple = world
         .input1
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));

@@ -33,3 +33,7 @@ pub fn normalize(v: Vector) -> Vector {
         z: v.z / magnitude(v),
     }
 }
+
+pub fn dot_product(v1: Vector, v2: Vector) -> Float {
+    (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z)
+}
