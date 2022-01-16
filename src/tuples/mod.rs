@@ -37,3 +37,11 @@ pub fn normalize(v: Vector) -> Vector {
 pub fn dot_product(v1: Vector, v2: Vector) -> Float {
     (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z)
 }
+
+pub fn cross_product(v1: Vector, v2: Vector) -> Vector {
+    Vector {
+        x: (v1.y * v2.z) - (v1.z * v2.y),
+        y: (v1.z * v2.x) - (v1.x * v2.z),
+        z: (v1.x * v2.y) - (v1.y * v2.x),
+    }
+}

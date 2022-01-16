@@ -3,7 +3,9 @@ use std::convert::Infallible;
 use async_trait::async_trait;
 use cucumber::{given, then, when, World, WorldInit};
 
-use ray_tracer::tuples::{dot_product, magnitude, normalize, point, vector, Float, Point, Vector};
+use ray_tracer::tuples::{
+    cross_product, dot_product, magnitude, normalize, point, vector, Float, Point, Vector,
+};
 
 #[derive(Clone, Copy, Debug)]
 enum TupleType {
@@ -354,6 +356,38 @@ fn when_tuple_is_normalized(world: &mut TupleWorld) {
     };
 
     world.input1 = Some(TupleType::VectorTuple(normalized_vector));
+}
+
+#[then(regex = r"^cross\(([ab]), ([ab])\) = vector\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$")]
+fn assert_vector_cross_products(
+    world: &mut TupleWorld,
+    tuple_1: String,
+    tuple_2: String,
+    expected_x: f64,
+    expected_y: f64,
+    expected_z: f64,
+) {
+    let unwrap_vector =
+        |tuple: Option<TupleType>| match tuple.unwrap_or_else(|| panic!("No tuple available")) {
+            TupleType::VectorTuple(v) => v,
+            _ => panic!("Only vectors supported"),
+        };
+
+    let vectors = [tuple_1, tuple_2]
+        .iter()
+        .map(|input| match input.as_str() {
+            "a" => unwrap_vector(world.input1),
+            "b" => unwrap_vector(world.input2),
+            _ => panic!("Unknown value: {}", input),
+        })
+        .collect::<Vec<Vector>>();
+
+    if let [vector_1, vector_2] = vectors[..] {
+        let result = cross_product(vector_1, vector_2);
+        assert_eq!(result.x, expected_x);
+        assert_eq!(result.y, expected_y);
+        assert_eq!(result.z, expected_z);
+    }
 }
 
 fn main() {
