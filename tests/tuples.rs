@@ -1,9 +1,9 @@
 use std::convert::Infallible;
 
 use async_trait::async_trait;
-use cucumber::{given, then, World, WorldInit};
+use cucumber::{given, then, when, World, WorldInit};
 
-use ray_tracer::tuples::{magnitude, point, vector, Float, Point, Vector};
+use ray_tracer::tuples::{magnitude, normalize, point, vector, Float, Point, Vector};
 
 #[derive(Debug)]
 enum TupleType {
@@ -277,7 +277,7 @@ fn assert_tuple_to_scalar_operations(
     assert_eq!(w, expected_w);
 }
 
-#[then(regex = r"^magnitude\(v\) = (\d+)$")]
+#[then(regex = r"^magnitude\(\w+\) = (\d+)$")]
 fn assert_magnitude_unit_vector(world: &mut TupleWorld, expected_value: f64) {
     let tuple = world
         .input1
@@ -307,6 +307,45 @@ fn assert_magnitude_values(world: &mut TupleWorld, expected_squared_value: f64) 
     let expected_value = expected_squared_value.sqrt();
 
     assert_eq!(result, expected_value);
+}
+
+#[then(
+    regex = r"^normalize\(\w\) = (?:approximately )?vector\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$"
+)]
+fn assert_tuple_normalize(
+    world: &mut TupleWorld,
+    expected_x: f64,
+    expected_y: f64,
+    expected_z: f64,
+) {
+    let tuple = world
+        .input1
+        .as_ref()
+        .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
+
+    let result = match tuple {
+        TupleType::VectorTuple(v) => normalize(v),
+        _ => panic!("Only vector tuples allowed"),
+    };
+
+    assert_eq!(result.x, expected_x);
+    assert_eq!(result.y, expected_y);
+    assert_eq!(result.z, expected_z);
+}
+
+#[when(regex = r"^norm ← normalize\(v\)$")]
+fn when_tuple_is_normalized(world: &mut TupleWorld) {
+    let tuple = match &world.input1 {
+        Some(tuple) => tuple,
+        _ => panic!("Tuple failed to be constructed"),
+    };
+
+    let normalized_vector = match tuple {
+        TupleType::VectorTuple(v) => normalize(v),
+        _ => panic!("Only vectors can be normalized"),
+    };
+
+    world.input1 = Some(TupleType::VectorTuple(normalized_vector));
 }
 
 fn main() {
