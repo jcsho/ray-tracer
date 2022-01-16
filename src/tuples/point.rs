@@ -13,10 +13,10 @@ impl PartialEq for Point {
     }
 }
 
-impl<'a, 'b> std::ops::Add<&'b Vector> for &'a Point {
+impl std::ops::Add<Vector> for Point {
     type Output = Point;
 
-    fn add(self, other: &'b Vector) -> Self::Output {
+    fn add(self, other: Vector) -> Self::Output {
         Point {
             x: self.x + other.x,
             y: self.y + other.y,
@@ -25,10 +25,10 @@ impl<'a, 'b> std::ops::Add<&'b Vector> for &'a Point {
     }
 }
 
-impl<'a, 'b> std::ops::Sub<&'b Point> for &'a Point {
+impl std::ops::Sub<Point> for Point {
     type Output = Vector;
 
-    fn sub(self, other: &'b Point) -> Self::Output {
+    fn sub(self, other: Point) -> Self::Output {
         Vector {
             x: self.x - other.x,
             y: self.y - other.y,
@@ -37,10 +37,10 @@ impl<'a, 'b> std::ops::Sub<&'b Point> for &'a Point {
     }
 }
 
-impl<'a, 'b> std::ops::Sub<&'b Vector> for &'a Point {
+impl std::ops::Sub<Vector> for Point {
     type Output = Point;
 
-    fn sub(self, other: &'b Vector) -> Self::Output {
+    fn sub(self, other: Vector) -> Self::Output {
         Point {
             x: self.x - other.x,
             y: self.y - other.y,
@@ -61,7 +61,7 @@ impl std::ops::Neg for Point {
     }
 }
 
-impl<'a> std::ops::Mul<Float> for &'a Point {
+impl std::ops::Mul<Float> for Point {
     type Output = Point;
 
     fn mul(self, other: Float) -> Self::Output {
@@ -73,7 +73,7 @@ impl<'a> std::ops::Mul<Float> for &'a Point {
     }
 }
 
-impl<'a> std::ops::Div<Float> for &'a Point {
+impl std::ops::Div<Float> for Point {
     type Output = Point;
 
     fn div(self, other: Float) -> Self::Output {

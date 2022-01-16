@@ -22,11 +22,11 @@ pub fn vector(x: f64, y: f64, z: f64) -> Vector {
     }
 }
 
-pub fn magnitude(v: &Vector) -> Float {
+pub fn magnitude(v: Vector) -> Float {
     (v.x.pow(2) + v.y.pow(2) + v.z.pow(2)).sqrt()
 }
 
-pub fn normalize(v: &Vector) -> Vector {
+pub fn normalize(v: Vector) -> Vector {
     Vector {
         x: v.x / magnitude(v),
         y: v.y / magnitude(v),

@@ -5,15 +5,15 @@ use cucumber::{given, then, when, World, WorldInit};
 
 use ray_tracer::tuples::{magnitude, normalize, point, vector, Float, Point, Vector};
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 enum TupleType {
     PointTuple(Point),
     VectorTuple(Vector),
 }
 
-type Tuple<'a> = (&'a Float, &'a Float, &'a Float, Float);
+type Tuple = (Float, Float, Float, Float);
 
-fn unwrap_tuple(tuple: &TupleType) -> Tuple {
+fn unwrap_tuple(tuple: TupleType) -> Tuple {
     match tuple {
         TupleType::PointTuple(Point { x, y, z }) => (x, y, z, Float::from(1.0)),
         TupleType::VectorTuple(Vector { x, y, z }) => (x, y, z, Float::from(0.0)),
@@ -21,12 +21,12 @@ fn unwrap_tuple(tuple: &TupleType) -> Tuple {
 }
 
 fn tuple_operation_matrix(
-    tuple1: &TupleType,
-    tuple2: &TupleType,
-    point_to_point_operation: fn(&Point, &Point) -> TupleType,
-    point_to_vector_operation: fn(&Point, &Vector) -> TupleType,
-    vector_to_point_operation: fn(&Vector, &Point) -> TupleType,
-    vector_to_vector_operation: fn(&Vector, &Vector) -> TupleType,
+    tuple1: TupleType,
+    tuple2: TupleType,
+    point_to_point_operation: fn(Point, Point) -> TupleType,
+    point_to_vector_operation: fn(Point, Vector) -> TupleType,
+    vector_to_point_operation: fn(Vector, Point) -> TupleType,
+    vector_to_vector_operation: fn(Vector, Vector) -> TupleType,
 ) -> TupleType {
     match tuple1 {
         TupleType::PointTuple(p1) => match tuple2 {
@@ -79,15 +79,14 @@ fn parse_tuple_inputs(world: &mut TupleWorld, x: f64, y: f64, z: f64, w: f64) {
 fn assert_single_tuple_properties(world: &mut TupleWorld, property: String, expected_value: f64) {
     let tuple = world
         .input1
-        .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
     let (x, y, z, w) = unwrap_tuple(tuple);
 
     match property.as_str() {
-        "x" => assert_eq!(x, &expected_value),
-        "y" => assert_eq!(y, &expected_value),
-        "z" => assert_eq!(z, &expected_value),
+        "x" => assert_eq!(x, expected_value),
+        "y" => assert_eq!(y, expected_value),
+        "z" => assert_eq!(z, expected_value),
         "w" => assert_eq!(w, expected_value),
         _ => panic!("Unknown property value \"{}\"", property),
     }
@@ -101,7 +100,6 @@ fn assert_tuple_type(
 ) {
     let tuple = world
         .input1
-        .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
     let tuple_type = match tuple {
@@ -154,14 +152,13 @@ fn assert_tuples_shortcut(
 ) {
     let tuple = world
         .input1
-        .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
     let (x, y, z, w) = unwrap_tuple(tuple);
 
-    assert_eq!(x, &expected_x);
-    assert_eq!(y, &expected_y);
-    assert_eq!(z, &expected_z);
+    assert_eq!(x, expected_x);
+    assert_eq!(y, expected_y);
+    assert_eq!(z, expected_z);
     assert_eq!(w, expected_w);
 }
 
@@ -178,12 +175,10 @@ fn assert_tuple_to_tuple_operations(
 ) {
     let tuple1 = world
         .input1
-        .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
     let tuple2 = world
         .input2
-        .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
     let result = match operator.as_str() {
@@ -206,11 +201,11 @@ fn assert_tuple_to_tuple_operations(
         _ => panic!("Unexpected operator: {}", operator),
     };
 
-    let (x, y, z, w) = unwrap_tuple(&result);
+    let (x, y, z, w) = unwrap_tuple(result);
 
-    assert_eq!(x, &expected_x);
-    assert_eq!(y, &expected_y);
-    assert_eq!(z, &expected_z);
+    assert_eq!(x, expected_x);
+    assert_eq!(y, expected_y);
+    assert_eq!(z, expected_z);
     assert_eq!(w, expected_w);
 }
 
@@ -224,19 +219,18 @@ fn assert_tuple_negation(
 ) {
     let tuple = world
         .input1
-        .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
     let result = match tuple {
-        TupleType::PointTuple(p) => TupleType::PointTuple(-(*p)),
-        TupleType::VectorTuple(v) => TupleType::VectorTuple(-(*v)),
+        TupleType::PointTuple(p) => TupleType::PointTuple(-p),
+        TupleType::VectorTuple(v) => TupleType::VectorTuple(-v),
     };
 
-    let (x, y, z, w) = unwrap_tuple(&result);
+    let (x, y, z, w) = unwrap_tuple(result);
 
-    assert_eq!(x, &expected_x);
-    assert_eq!(y, &expected_y);
-    assert_eq!(z, &expected_z);
+    assert_eq!(x, expected_x);
+    assert_eq!(y, expected_y);
+    assert_eq!(z, expected_z);
     assert_eq!(w, expected_w);
 }
 
@@ -254,7 +248,6 @@ fn assert_tuple_to_scalar_operations(
 ) {
     let tuple = world
         .input1
-        .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
     let result = match operator.as_str() {
@@ -269,11 +262,11 @@ fn assert_tuple_to_scalar_operations(
         _ => panic!("Unexpected scalar operator: {}", operator),
     };
 
-    let (x, y, z, w) = unwrap_tuple(&result);
+    let (x, y, z, w) = unwrap_tuple(result);
 
-    assert_eq!(x, &expected_x);
-    assert_eq!(y, &expected_y);
-    assert_eq!(z, &expected_z);
+    assert_eq!(x, expected_x);
+    assert_eq!(y, expected_y);
+    assert_eq!(z, expected_z);
     assert_eq!(w, expected_w);
 }
 
@@ -281,7 +274,6 @@ fn assert_tuple_to_scalar_operations(
 fn assert_magnitude_unit_vector(world: &mut TupleWorld, expected_value: f64) {
     let tuple = world
         .input1
-        .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
     let result = match tuple {
@@ -296,7 +288,6 @@ fn assert_magnitude_unit_vector(world: &mut TupleWorld, expected_value: f64) {
 fn assert_magnitude_values(world: &mut TupleWorld, expected_squared_value: f64) {
     let tuple = world
         .input1
-        .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
     let result = match tuple {
@@ -320,7 +311,6 @@ fn assert_tuple_normalize(
 ) {
     let tuple = world
         .input1
-        .as_ref()
         .unwrap_or_else(|| panic!("Failed to construct tuple from input"));
 
     let result = match tuple {
@@ -341,7 +331,7 @@ fn when_tuple_is_normalized(world: &mut TupleWorld) {
     };
 
     let normalized_vector = match tuple {
-        TupleType::VectorTuple(v) => normalize(v),
+        TupleType::VectorTuple(v) => normalize(*v),
         _ => panic!("Only vectors can be normalized"),
     };
 
