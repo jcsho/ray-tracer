@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 /// New-type wrapper for f64
 /// implements comparisons against f64
 #[derive(Copy, Clone, Debug)]
@@ -22,6 +24,18 @@ impl PartialEq<Self> for Float {
 impl PartialEq<f64> for Float {
     fn eq(&self, other: &f64) -> bool {
         (self.0 - other).abs() < EPSILON
+    }
+}
+
+impl std::cmp::PartialOrd<Self> for Float {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+
+impl std::cmp::PartialOrd<f64> for Float {
+    fn partial_cmp(&self, other: &f64) -> Option<Ordering> {
+        self.0.partial_cmp(other)
     }
 }
 
