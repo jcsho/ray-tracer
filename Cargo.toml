@@ -9,6 +9,7 @@ edition = "2021"
 async-trait = "0.1"
 cucumber = { version = "0.11", features = ["output-junit"] }
 futures = "0.3"
+rayon = "1.5"
 
 [[test]]
 name = "tuples"
