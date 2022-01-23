@@ -7,7 +7,7 @@ pub struct Float(f64);
 
 /// Constant for floating-point number comparisons
 /// precision is enough for ray-tracer
-const EPSILON: f64 = 0.00001;
+const EPSILON: f64 = 1e-5;
 
 impl From<f64> for Float {
     fn from(value: f64) -> Self {
