@@ -3,9 +3,11 @@ use std::convert::Infallible;
 use async_trait::async_trait;
 use cucumber::{given, then, when, World, WorldInit};
 
-use ray_tracer::tuples::{
-    cross_product, dot_product, magnitude, normalize, point, vector, Float, Point, Vector,
+use ray_tracer::geometry::{
+    cross_product, dot_product, magnitude, normalize, point, vector, Point, Vector,
 };
+use ray_tracer::graphics::{color, Color};
+use ray_tracer::Float;
 
 #[derive(Clone, Copy, Debug)]
 enum TupleType {
@@ -46,6 +48,7 @@ fn tuple_operation_matrix(
 struct TupleWorld {
     input1: Option<TupleType>,
     input2: Option<TupleType>,
+    color: Option<Color>,
 }
 
 #[async_trait(?Send)]
@@ -56,6 +59,7 @@ impl World for TupleWorld {
         Ok(Self {
             input1: Option::None,
             input2: Option::None,
+            color: Option::None,
         })
     }
 }
@@ -388,6 +392,29 @@ fn assert_vector_cross_products(
         assert_eq!(result.y, expected_y);
         assert_eq!(result.z, expected_z);
     }
+}
+
+#[given(regex = r"c ← color\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)")]
+fn create_color_from_tuple(world: &mut TupleWorld, red: f64, green: f64, blue: f64) {
+    let color = color(red, green, blue);
+    world.color = Some(color);
+}
+
+#[then(regex = r"c.(\w+) = (-?\d+.?\d*)")]
+fn assert_color_properties(world: &mut TupleWorld, property: String, value: f64) {
+    let color = match world.color {
+        Some(color) => color,
+        _ => panic!("No color created"),
+    };
+
+    let color_property = match property.as_str() {
+        "red" => color.red,
+        "green" => color.green,
+        "blue" => color.blue,
+        _ => panic!("Color does not contain property {}", property),
+    };
+
+    assert_eq!(color_property, value);
 }
 
 fn main() {
