@@ -1,8 +1,7 @@
-pub use crate::tuples::float::Float;
-pub use crate::tuples::point::Point;
-pub use crate::tuples::vector::Vector;
+use crate::float::Float;
+pub use crate::geometry::point::Point;
+pub use crate::geometry::vector::Vector;
 
-mod float;
 mod point;
 mod vector;
 

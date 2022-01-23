@@ -1,4 +1,5 @@
-use crate::tuples::{Float, Point};
+use crate::float::Float;
+use crate::geometry::Point;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Vector {

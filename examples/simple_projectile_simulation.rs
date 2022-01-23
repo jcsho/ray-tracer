@@ -1,6 +1,7 @@
 use rayon::prelude::*;
 
-use ray_tracer::tuples::{normalize, point, vector, Float, Point, Vector};
+use ray_tracer::geometry::{normalize, point, vector, Point, Vector};
+use ray_tracer::Float;
 
 #[derive(Copy, Clone, Debug)]
 struct Projectile {
