@@ -7,6 +7,12 @@ pub struct Color {
     pub blue: Float,
 }
 
+impl PartialEq<Self> for Color {
+    fn eq(&self, other: &Self) -> bool {
+        self.red == other.red && self.green == other.green && self.blue == other.blue
+    }
+}
+
 impl std::ops::Add<Self> for Color {
     type Output = Self;
 
