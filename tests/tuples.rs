@@ -48,7 +48,8 @@ fn tuple_operation_matrix(
 struct TupleWorld {
     input1: Option<TupleType>,
     input2: Option<TupleType>,
-    color: Option<Color>,
+    color1: Option<Color>,
+    color2: Option<Color>,
 }
 
 #[async_trait(?Send)]
@@ -59,7 +60,8 @@ impl World for TupleWorld {
         Ok(Self {
             input1: Option::None,
             input2: Option::None,
-            color: Option::None,
+            color1: Option::None,
+            color2: Option::None,
         })
     }
 }
@@ -394,15 +396,19 @@ fn assert_vector_cross_products(
     }
 }
 
-#[given(regex = r"c ← color\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)")]
+#[given(regex = r"c\d* ← color\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)")]
 fn create_color_from_tuple(world: &mut TupleWorld, red: f64, green: f64, blue: f64) {
     let color = color(red, green, blue);
-    world.color = Some(color);
+
+    match world.color1 {
+        Some(_) => world.color2 = Some(color),
+        None => world.color1 = Some(color),
+    };
 }
 
-#[then(regex = r"c.(\w+) = (-?\d+.?\d*)")]
+#[then(regex = r"^c.(\w+) = (-?\d+.?\d*)$")]
 fn assert_color_properties(world: &mut TupleWorld, property: String, value: f64) {
-    let color = match world.color {
+    let color = match world.color1 {
         Some(color) => color,
         _ => panic!("No color created"),
     };
@@ -415,6 +421,46 @@ fn assert_color_properties(world: &mut TupleWorld, property: String, value: f64)
     };
 
     assert_eq!(color_property, value);
+}
+
+#[then(regex = r"^c \* (-?\d+.?\d*) = color\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$")]
+fn assert_color_to_scalar_operations(
+    world: &mut TupleWorld,
+    scalar_value: f64,
+    expected_red: f64,
+    expected_green: f64,
+    expected_blue: f64,
+) {
+    let color = world.color1.unwrap_or_else(|| panic!("No color created"));
+
+    let result = color * Float::from(scalar_value);
+
+    assert_eq!(result.red, expected_red);
+    assert_eq!(result.green, expected_green);
+    assert_eq!(result.blue, expected_blue);
+}
+
+#[then(regex = r"^c1 ([*+-]) c2 = color\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$")]
+fn assert_color_to_color_operations(
+    world: &mut TupleWorld,
+    operation: String,
+    expected_red: f64,
+    expected_green: f64,
+    expected_blue: f64,
+) {
+    let color1 = world.color1.unwrap_or_else(|| panic!("No color created"));
+    let color2 = world.color2.unwrap_or_else(|| panic!("No color created"));
+
+    let result = match operation.as_str() {
+        "+" => color1 + color2,
+        "-" => color1 - color2,
+        "*" => color1 * color2,
+        _ => panic!("Operation `{}` not supported", operation),
+    };
+
+    assert_eq!(result.red, expected_red);
+    assert_eq!(result.green, expected_green);
+    assert_eq!(result.blue, expected_blue);
 }
 
 fn main() {
