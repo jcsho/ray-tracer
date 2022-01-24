@@ -14,3 +14,7 @@ rayon = "1.5"
 [[test]]
 name = "tuples"
 harness = false
+
+[[test]]
+name = "canvas"
+harness = false
