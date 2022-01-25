@@ -1,6 +1,10 @@
+pub use crate::graphics::canvas::pixel_at;
+pub use crate::graphics::canvas::write_pixel;
+pub use crate::graphics::canvas::Canvas;
 pub use crate::graphics::color::Color;
 use crate::Float;
 
+mod canvas;
 mod color;
 
 pub fn color(red: f64, green: f64, blue: f64) -> Color {
@@ -8,5 +12,15 @@ pub fn color(red: f64, green: f64, blue: f64) -> Color {
         red: Float::from(red),
         green: Float::from(green),
         blue: Float::from(blue),
+    }
+}
+
+pub fn canvas(width: usize, height: usize) -> Canvas {
+    // fill canvas with black
+    let default_color = color(0.0, 0.0, 0.0);
+    Canvas {
+        width,
+        height,
+        pixels: vec![default_color; width * height],
     }
 }
