@@ -16,3 +16,18 @@ pub fn pixel_at(canvas: &Canvas, x: usize, y: usize) -> Color {
     let index = x + (canvas.width * y);
     canvas.pixels[index]
 }
+
+const PPM_VERSION: &str = "P3";
+const MAX_COLOR_VALUE: u8 = 255;
+
+pub fn canvas_to_ppm(canvas: &Canvas) -> String {
+    let mut ppm_file = format!("{}\n", PPM_VERSION);
+    ppm_file.push_str(&format!(
+        "{width} {height}\n",
+        width = canvas.width,
+        height = canvas.height
+    ));
+    ppm_file.push_str(&format!("{}\n", MAX_COLOR_VALUE));
+
+    ppm_file
+}

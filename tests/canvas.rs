@@ -1,14 +1,16 @@
 use std::convert::Infallible;
 
 use async_trait::async_trait;
+use cucumber::gherkin::Step;
 use cucumber::{given, then, when, World, WorldInit};
 
-use ray_tracer::graphics::{canvas, color, pixel_at, write_pixel, Canvas, Color};
+use ray_tracer::graphics::{canvas, canvas_to_ppm, color, pixel_at, write_pixel, Canvas, Color};
 
 #[derive(Debug, WorldInit)]
 struct CanvasWorld {
     canvas: Option<Canvas>,
     paint_color: Option<Color>,
+    output: Option<String>,
 }
 
 #[async_trait(?Send)]
@@ -19,6 +21,7 @@ impl World for CanvasWorld {
         Ok(Self {
             canvas: Option::None,
             paint_color: Option::None,
+            output: Option::None,
         })
     }
 }
@@ -34,7 +37,7 @@ fn parse_color(world: &mut CanvasWorld, red: f64, green: f64, blue: f64) {
 }
 
 #[when(regex = r"^write_pixel\(c, (\d+), (\d+), \w+\)$")]
-fn paint_pixel(world: &mut CanvasWorld, x: usize, y: usize) {
+fn when_write_pixel(world: &mut CanvasWorld, x: usize, y: usize) {
     let canvas = world
         .canvas
         .as_mut()
@@ -45,6 +48,15 @@ fn paint_pixel(world: &mut CanvasWorld, x: usize, y: usize) {
         .unwrap_or_else(|| panic!("Color not parsed correctly"));
 
     write_pixel(canvas, x, y, paint_color);
+}
+
+#[when(regex = r"^ppm ← canvas_to_ppm\(c\)$")]
+fn when_write_to_ppm(world: &mut CanvasWorld) {
+    let canvas = world
+        .canvas
+        .as_ref()
+        .unwrap_or_else(|| panic!("Canvas not created"));
+    world.output = Some(canvas_to_ppm(canvas));
 }
 
 #[then(regex = r"^c.(\w+) = (\d+)$")]
@@ -89,6 +101,25 @@ fn assert_pixel_painted(world: &mut CanvasWorld, x: usize, y: usize) {
         .unwrap_or_else(|| panic!("Color not parsed correctly"));
 
     assert_eq!(pixel_at(canvas, x, y), paint_color);
+}
+
+#[then(regex = r"^lines 1-3 of ppm are$")]
+fn assert_ppm_output(world: &mut CanvasWorld, step: &Step) {
+    let actual_ppm_output = world
+        .output
+        .as_ref()
+        .unwrap_or_else(|| panic!("Failed to get PPM output"));
+
+    let expected_ppm_output = step
+        .docstring()
+        .unwrap_or_else(|| panic!("Missing docstring"));
+
+    // workaround gherkin parsing the doc string with a
+    // newline character at the beginning
+    let mut formatted_expected_ppm_output = expected_ppm_output.clone();
+    formatted_expected_ppm_output.remove(0);
+
+    assert_eq!(actual_ppm_output, &formatted_expected_ppm_output);
 }
 
 fn main() {
