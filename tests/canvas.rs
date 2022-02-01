@@ -9,7 +9,7 @@ use ray_tracer::graphics::{canvas, canvas_to_ppm, color, pixel_at, write_pixel, 
 #[derive(Debug, WorldInit)]
 struct CanvasWorld {
     canvas: Option<Canvas>,
-    paint_color: Option<Color>,
+    paint_colors: Vec<Color>,
     output: Option<String>,
 }
 
@@ -20,7 +20,7 @@ impl World for CanvasWorld {
     async fn new() -> Result<Self, Infallible> {
         Ok(Self {
             canvas: Option::None,
-            paint_color: Option::None,
+            paint_colors: Vec::with_capacity(3),
             output: Option::None,
         })
     }
@@ -31,21 +31,33 @@ fn create_canvas(world: &mut CanvasWorld, width: usize, height: usize) {
     world.canvas = Some(canvas(width, height));
 }
 
-#[given(regex = r"^\w+ ← color\((\d+), (\d+), (\d+)\)$")]
+#[given(regex = r"^\w+\d* ← color\((-?\d+.?\d*), (-?\d+.?\d*), (-?\d+.?\d*)\)$")]
 fn parse_color(world: &mut CanvasWorld, red: f64, green: f64, blue: f64) {
-    world.paint_color = Some(color(red, green, blue));
+    world.paint_colors.push(color(red, green, blue));
 }
 
-#[when(regex = r"^write_pixel\(c, (\d+), (\d+), \w+\)$")]
-fn when_write_pixel(world: &mut CanvasWorld, x: usize, y: usize) {
+#[when(regex = r"^write_pixel\(c, (\d+), (\d+), (\w+)\)$")]
+fn when_write_pixel(world: &mut CanvasWorld, x: usize, y: usize, color: String) {
     let canvas = world
         .canvas
         .as_mut()
         .unwrap_or_else(|| panic!("Canvas not created"));
 
-    let paint_color = world
-        .paint_color
-        .unwrap_or_else(|| panic!("Color not parsed correctly"));
+    let paint_color = match color.as_str() {
+        "red" | "c1" => *world
+            .paint_colors
+            .first()
+            .unwrap_or_else(|| panic!("Color not available")),
+        "c2" => *world
+            .paint_colors
+            .get(1)
+            .unwrap_or_else(|| panic!("Color not available")),
+        "c3" => *world
+            .paint_colors
+            .get(2)
+            .unwrap_or_else(|| panic!("Color not available")),
+        _ => panic!("Unknown paint color"),
+    };
 
     write_pixel(canvas, x, y, paint_color);
 }
@@ -96,30 +108,48 @@ fn assert_pixel_painted(world: &mut CanvasWorld, x: usize, y: usize) {
         .as_ref()
         .unwrap_or_else(|| panic!("Canvas not created"));
 
-    let paint_color = world
-        .paint_color
+    let paint_color = *world
+        .paint_colors
+        .get(0)
         .unwrap_or_else(|| panic!("Color not parsed correctly"));
 
     assert_eq!(pixel_at(canvas, x, y), paint_color);
 }
 
 #[then(regex = r"^lines 1-3 of ppm are$")]
-fn assert_ppm_output(world: &mut CanvasWorld, step: &Step) {
+fn assert_ppm_header_is_correct(world: &mut CanvasWorld, step: &Step) {
     let actual_ppm_output = world
         .output
         .as_ref()
         .unwrap_or_else(|| panic!("Failed to get PPM output"));
 
-    let expected_ppm_output = step
+    let docstring = step
         .docstring()
         .unwrap_or_else(|| panic!("Missing docstring"));
 
     // workaround gherkin parsing the doc string with a
-    // newline character at the beginning
-    let mut formatted_expected_ppm_output = expected_ppm_output.clone();
-    formatted_expected_ppm_output.remove(0);
+    // newline character at the beginning and the end
+    let expected_ppm_header = &docstring[1..(docstring.chars().count() - 1)];
 
-    assert_eq!(actual_ppm_output, &formatted_expected_ppm_output);
+    assert!(actual_ppm_output.starts_with(expected_ppm_header));
+}
+
+#[then(regex = r"^lines 4-6 of ppm are$")]
+fn assert_ppm_body_is_correct(world: &mut CanvasWorld, step: &Step) {
+    let docstring = step
+        .docstring()
+        .unwrap_or_else(|| panic!("Missing docstring"));
+
+    // workaround gherkin parsing the doc string with a
+    // newline character at the beginning and the end
+    let expected_ppm_body = &docstring[1..(docstring.chars().count() - 1)];
+
+    let actual_ppm_output = world
+        .output
+        .as_ref()
+        .unwrap_or_else(|| panic!("Failed to get PPM output"));
+
+    assert!(actual_ppm_output.ends_with(expected_ppm_body));
 }
 
 fn main() {
