@@ -37,3 +37,8 @@ Scenario: Constructing the PPM pixel data
   0 0 0 0 0 0 0 128 0 0 0 0 0 0 0
   0 0 0 0 0 0 0 0 0 0 0 0 0 0 255
   """
+
+Scenario: PPM files are terminated by a newline character
+  Given c ← canvas(5, 3)
+  When ppm ← canvas_to_ppm(c)
+  Then ppm ends with a newline character

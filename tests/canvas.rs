@@ -149,7 +149,17 @@ fn assert_ppm_body_is_correct(world: &mut CanvasWorld, step: &Step) {
         .as_ref()
         .unwrap_or_else(|| panic!("Failed to get PPM output"));
 
-    assert!(actual_ppm_output.ends_with(expected_ppm_body));
+    assert!(actual_ppm_output.contains(expected_ppm_body));
+}
+
+#[then(regex = r"^ppm ends with a newline character$")]
+fn assert_ppm_body_ends_with_newline(world: &mut CanvasWorld) {
+    let actual_ppm_output = world
+        .output
+        .as_ref()
+        .unwrap_or_else(|| panic!("Failed to get PPM output"));
+
+    assert!(actual_ppm_output.ends_with('\n'));
 }
 
 fn main() {

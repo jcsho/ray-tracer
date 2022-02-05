@@ -77,7 +77,7 @@ fn build_ppm_string_from_pixels(pixels: &[Color], width: &usize) -> (String, usi
     srgb_pixels.iter().enumerate().fold(
         (String::new(), 0),
         |(mut body, mut line_length), (index, color_channel)| {
-            if index != 0 && index % flattened_width == 0 {
+            if index % flattened_width == 0 {
                 body.push('\n');
                 line_length = 0;
             }
@@ -91,17 +91,20 @@ fn build_ppm_string_from_pixels(pixels: &[Color], width: &usize) -> (String, usi
 }
 
 pub fn canvas_to_ppm(canvas: &Canvas) -> String {
-    let mut ppm_file = format!("{}\n", PPM_VERSION);
-    ppm_file.push_str(&format!(
-        "{width} {height}\n",
+    let mut ppm_file = format!(
+        "{ppm_version}\n{width} {height}\n{rgb_value_limit}",
+        ppm_version = PPM_VERSION,
         width = canvas.width,
-        height = canvas.height
-    ));
-    ppm_file.push_str(&format!("{}\n", MAX_SRGB_VALUE));
+        height = canvas.height,
+        rgb_value_limit = MAX_SRGB_VALUE,
+    );
 
     let (body, _) = build_ppm_string_from_pixels(&canvas.pixels, &canvas.width);
 
     ppm_file.push_str(&body);
+
+    // ensure file ends with a line break for compatibility with all PPM3 readers
+    ppm_file.push('\n');
 
     ppm_file
 }
