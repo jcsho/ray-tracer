@@ -7,6 +7,12 @@ pub struct Color {
     pub blue: Float,
 }
 
+impl Color {
+    pub fn into_array(&self) -> [Float; 3] {
+        [self.red, self.green, self.blue]
+    }
+}
+
 impl PartialEq<Self> for Color {
     fn eq(&self, other: &Self) -> bool {
         self.red == other.red && self.green == other.green && self.blue == other.blue

@@ -4,12 +4,12 @@ version = "0.2.2"
 edition = "2021"
 
 [dependencies]
+rayon = "1.5"
 
 [dev-dependencies]
 async-trait = "0.1"
 cucumber = { version = "0.11", features = ["output-junit"] }
 futures = "0.3"
-rayon = "1.5"
 
 [[test]]
 name = "tuples"

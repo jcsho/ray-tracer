@@ -1,6 +1,4 @@
-pub use crate::graphics::canvas::pixel_at;
-pub use crate::graphics::canvas::write_pixel;
-pub use crate::graphics::canvas::Canvas;
+pub use crate::graphics::canvas::{canvas_to_ppm, pixel_at, write_pixel, Canvas};
 pub use crate::graphics::color::Color;
 use crate::Float;
 

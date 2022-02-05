@@ -71,6 +71,14 @@ impl std::ops::Mul<Self> for Float {
     }
 }
 
+impl std::ops::Mul<u8> for Float {
+    type Output = f64;
+
+    fn mul(self, rhs: u8) -> Self::Output {
+        self.0 * (rhs as f64)
+    }
+}
+
 impl std::ops::Div<Self> for Float {
     type Output = Self;
 
