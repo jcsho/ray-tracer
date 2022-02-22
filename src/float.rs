@@ -95,4 +95,8 @@ impl Float {
     pub fn sqrt(&self) -> Self {
         Float(self.0.sqrt())
     }
+
+    pub fn to_number(&self) -> f64 {
+        self.0
+    }
 }
